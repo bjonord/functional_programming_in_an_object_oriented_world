@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+
+    <title>Functional Programming in an Object Oriented World</title>
+
+    <meta name="author" content="Björn Skarner">
+
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <link rel="stylesheet" href="css/reveal.min.css">
+    <link rel="stylesheet" href="css/theme/solarized.css" id="theme">
+
+    <!-- For syntax highlighting -->
+    <link rel="stylesheet" href="lib/css/zenburn.css">
+
+    <!-- If the query includes 'print-pdf', use the PDF print sheet -->
+    <script>
+     document.write( '<link rel="stylesheet" href="css/print/' + ( window.location.search.match( /print-pdf/gi ) ? 'pdf' : 'paper' ) + '.css" type="text/css" media="print">' );
+    </script>
+
+    <!--[if lt IE 9]>
+    <script src="lib/js/html5shiv.js"></script>
+    <![endif]-->
+  </head>
+
+  <body>
+
+    <div class="reveal">
+
+      <!-- Any section element inside of this container is displayed as a slide -->
+      <div class="slides">
+        <section>
+          <h3>Functional Programming in an Object Oriented World</h3>
+          <small>(a presentation created from a workshop by Aslam Khan)</small>
+        </section>
+        <section>
+          <section>
+            <h2>Functional Programming</h2>
+            <p style="font-size: 40px">f(x)</p>
+          </section>
+          <section>
+            <h3>First time</h3>
+            <img height="238" src="images/confused.jpg">
+          </section>
+        </section>
+        <section>
+          <section>
+            <h3>How do we make it easier to understand</h3>
+            <h3>And</h3>
+            <h3>how do we apply it to our objectified world?</h3>
+          </section>
+          <section>
+            <h2>Breaking it down...</h2>
+            <img src="images/breaking_it_down.gif">
+          </section>
+        </section>
+        <section>
+          <section>
+            <h2>Functions</h2>
+            <pre><code class="mma" data-trim style="font-size: 24px; margin-top: 20px;">
+              fn(x) = x * 25 / 100
+            </code></pre>
+            <ul>
+              <li class="fragment">What would you say this function does?</li>
+              <li class="fragment">Does one thing, same input always the same output.</li>
+            </ul>
+          </section>
+          <section>
+            <pre><code class="javascript" data-trim style="font-size: 24px; margin-top: 20px;">
+function fn(x) {
+  return x * 25 / 100;
+}
+            </code></pre>
+            <small>(Javascript)</small>
+          </section>
+        </section>
+        <section>
+          <section>
+            <h2>Three principles</h2>
+            <ul>
+              <li>Single responsibility</li>
+              <li>No side effects</li>
+              <li>Immmutability</li>
+            </ul>
+          </section>
+          <section>
+            <h2>Things we touch</h2>
+            <ul>
+              <li>Recursion</li>
+              <li>Tail Call Optimisation</li>
+              <li>Higher Order Functions</li>
+            </ul>
+          </section>
+          <section>
+            <h2>Things we can't touch</h2>
+            <ul>
+              <li>Monads</li>
+              <li>Monoids</li>
+            </ul>
+          </section>
+        </section>
+        <section>
+          <section>
+            <h3>1st Principle - Single Responsibility</h3>
+          </section>
+          <section>
+            <pre><code class="ruby" data-trim>
+def add_to_shopping_cart(item)
+  self.items << item
+
+  self.total += item.value
+  self.total
+end
+            </code></pre>
+            <p>
+              <small>(Ruby)</small>
+            </p>
+            <ul>
+              <li class="fragment">Single responsibility?</li>
+              <li class="fragment">How do we fix it?</li>
+            </ul>
+          </section>
+          <section>
+            <pre><code class="ruby" data-trim>
+def add_to_shopping_cart(item)
+  self.items << item
+end
+
+def total
+  sum = 0
+
+  for item in items do
+    sum += item.value
+  end
+
+  sum
+end
+            </code></pre>
+            <p>
+              <small>(Ruby)</small>
+            </p>
+          </section>
+          <section>
+            <h2>What about logging?</h2>
+            <pre><code class="ruby" data-trim>
+def add_to_shopping_cart(item)
+  self.items << item
+  log("Item added to cart: #{item.sku}")
+end
+            </code></pre>
+            <p>
+              <small>(Ruby)</small>
+            </p>
+          </section>
+          <section>
+            <h2>Idealism vs Pragmatism</h2>
+          </section>
+          <section>
+            <img  src="images/effecient_and_pragmatic.jpg">
+          </section>
+        </section>
+        <section>
+          <section>
+            <h3>2nd Principle - No Side Effects</h3>
+          </section>
+          <section>
+            <pre><code class="ruby" data-trim>
+class Invoice < ActiveRecord::Base # ORM class
+  belongs_to :customer
+
+  def issue
+    customer.add_amount(self.amount)
+    self.status = 'Issued'
+    customer.total
+  end
+end
+            </code></pre>
+            <p>
+              <small>(Ruby)</small>
+            </p>
+            <ul>
+              <li class="fragment">Side effects?</li>
+              <li class="fragment">How do we fix it?</li>
+            </ul>
+          </section>
+          <section>
+            <pre><code class="ruby" data-trim>
+class Customer < ActiveRecord::Base
+  has_many :invoices
+  def total_amount
+    invoices.where(status: 'Issued').reduce(0) do |total, invoice|
+      total += invoice.amount
+      total
+    end
+  end
+end
+
+class Invoice < ActiveRecord::Base
+  belongs_to :customer
+  def issue
+    self.status = 'Issued'
+  end
+end
+            </code></pre>
+            <p>
+              <small>(Ruby)</small>
+            </p>
+          </section>
+          <section>
+            <p>So we fixed the side effects, but at what cost?</p>
+            <ul>
+              <li class="fragment">Responsibility travels up the call stack</li>
+            </ul>
+          </section>
+          <section>
+            <ul>
+              <li>Atomic Consistency vs Consistency with Latency</li>
+              <li>Caused by the fact that we have been trained by our relational data store</li>
+            </ul>
+            <br />
+            <br />
+            <p class="fragment">"We can handle latency as we do in life." - Aslam Khan</p>
+          </section>
+        </section>
+        <section>
+          <section>
+            <h3>3rd Principle - Immutability</h3>
+          </section>
+          <section>
+            <pre><code class="ruby" data-trim>
+def add_to_shopping_cart(item)
+  self.items << item
+  self.items
+end
+            </code></pre>
+            <p>
+              <small>(Ruby)</small>
+            </p>
+            <ul>
+              <li class="fragment">Immutable?</li>
+              <li class="fragment">How would we achieve immutability?</li>
+            </ul>
+          </section>
+          <section>
+            <h3>Pragmatic Solution</h3>
+            <pre><code class="ruby" data-trim>
+def add_item_to_shopping_cart(shopping_cart, item)
+  shopping_cart.add item
+  shopping_cart
+end
+            </code></pre>
+            <p>
+              <small>(Ruby)</small>
+            </p>
+          </section>
+          <section>
+            <h3>Pure Immutability</h3>
+            <pre><code class="ruby" data-trim>
+def add_item_to_shopping_cart(shopping_cart, item)
+  # Dirty hack to deep copy an object in Ruby
+  shopping_cart = Marshal.load(Marshal.dump(shopping_cart))
+  shopping_cart.add item
+  shopping_cart
+end
+            </code></pre>
+            <p>
+              <small>(Ruby)</small>
+            </p>
+          </section>
+          <section>
+            <pre><code class="javascript" data-trim>
+next_value() {
+  this.n += 1;
+  return this.n;
+}
+            </code></pre>
+            <p>
+              <small>(Javascript)</small>
+            </p>
+          </section>
+          <section>
+            <pre><code class="javascript" data-trim>
+next_value(current_int) {
+  return current_int + 1;
+}
+            </code></pre>
+            <p>
+              <small>(Javascript)</small>
+            </p>
+          </section>
+        </section>
+        <section>
+          <section>
+            <h3>Recursion</h3>
+          </section>
+          <section>
+            <h3>Common issue</h3>
+            <p>Blowing the stack</p>
+          </section>
+          <section>
+            <h3>Solution</h3>
+            <p>Tail Call Optimisation</p>
+          </section>
+          <section>
+            <h3>Recursion</h3>
+            <pre><code class="javascript" data-trim>
+function sum(numbers) {
+  if(numbers.length == 0) {
+    return 0;
+  }
+  return numbers[0] + sum(numbers.slice(1));
+}
+            </code></pre>
+            <p>
+              <small>(Javascript)</small>
+            </p>
+          </section>
+          <section>
+            <h3>Tail Call</h3>
+            <pre><code class="javascript" data-trim>
+function sum(acc, numbers) {
+  if(numbers.length == 0) {
+    return acc;
+  }
+  return sum(acc + numbers[0], numbers.slice(1));
+}
+            </code></pre>
+            <p>
+              <small>(Javascript)</small>
+            </p>
+          </section>
+        </section>
+        <section>
+          <section>
+            <h3>Higher Order Functions</h3>
+            <p>Functions that take functions</p>
+          </section>
+          <section>
+            <h3>Regular Function</h3>
+            <pre><code class="javascript" data-trim>
+function sum(acc, numbers) {
+  if(numbers.length == 0) {
+    return acc;
+  }
+  return sum(acc + numbers[0], numbers.slice(1));
+}
+            </code></pre>
+            <p>
+              <small>(Javascript)</small>
+            </p>
+          </section>
+          <section>
+            <h3>Higher Order Function</h3>
+            <pre><code class="javascript" data-trim>
+function reduce(acc, collection, fn) {
+  if(collection.length == 0) {
+    return acc;
+  }
+  return reduce(fn(acc, collection[0]), collection.slice(1), fn);
+}
+function sum(numbers) {
+  return reduce(0, numbers, function(a, b) {
+    return a + b;
+  });
+}
+function count(numbers) {
+  return reduce(0, numbers, function(a, _) {
+    return a + 1;
+  });
+}
+            </code></pre>
+            <p>
+              <small>(Javascript)</small>
+            </p>
+          </section>
+        </section>
+        <section>
+          <h3>Easy Rigth?</h3>
+          <img src="images/functional_programming.png">
+        </section>
+        <section>
+          <h3>Questions?</h3>
+        </section>
+      </div>
+    </div>
+
+    <script src="lib/js/head.min.js"></script>
+    <script src="js/reveal.min.js"></script>
+
+    <script>
+
+     // Full list of configuration options available here:
+     // https://github.com/hakimel/reveal.js#configuration
+     Reveal.initialize({
+       controls: true,
+       progress: true,
+       history: true,
+       center: true,
+
+       theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
+       transition: Reveal.getQueryHash().transition || 'linear', // default/cube/page/concave/zoom/linear/fade/none
+
+       // Parallax scrolling
+       // parallaxBackgroundImage: 'https://s3.amazonaws.com/hakim-static/reveal-js/reveal-parallax-1.jpg',
+       // parallaxBackgroundSize: '2100px 900px',
+
+       // Optional libraries used to extend on reveal.js
+       dependencies: [
+         { src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+         { src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+         { src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+         { src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+         { src: 'plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+         { src: 'plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }
+       ]
+     });
+
+    </script>
+  </body>
+</html>
